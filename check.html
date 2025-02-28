@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StegoCipher</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Include CryptoJS for AES encryption and HMAC -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #ffffff;
+            color: #111827;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 0.5rem;
+            border-radius: 12px;
+            max-width: 1000px;
+            width: 85%;
+            margin: 0.0px auto;
+        }
+
+        /* Input and Button Styles */
+        textarea, input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            color: #111827;
+            background: #f9fafb;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        textarea::placeholder, input::placeholder {
+            color: #6b7280;
+        }
+
+        textarea:focus, input:focus {
+            border-color: #1e40af;
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+
+        button {
+            background: #1e40af;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #1e3a8a;
+            transform: translateY(-2px);
+        }
+
+        /* File Input Styling */
+        .file-input {
+            position: relative;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .file-input input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            height: 100%;
+            width: 100%;
+        }
+
+        .file-input label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1e40af;
+            color: #ffffff;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .file-input label:hover {
+            background: #1e3a8a;
+            transform: translateY(-2px);
+        }
+
+        .file-input label i {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+        /* Preview Section */
+        .preview {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .preview img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .preview img:hover {
+            transform: scale(1.02);
+        }
+
+        /* Status Messages */
+        .status {
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .status.error {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .status.warning {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        /* Toggle Buttons */
+        .toggle-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .toggle-buttons button {
+            background: #e0e7ff;
+            color: #1e40af;
+            border: none;
+            flex: 1;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-buttons button.active {
+            background: #1e40af;
+            color: #ffffff;
+        }
+
+        .toggle-buttons button:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Password Visibility Toggle */
+        .password-container {
+            position: relative;
+        }
+
+        .password-container input {
+            padding-right: 40px; /* Space for the eye icon */
+        }
+
+        .password-container .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6b7280;
+            transition: color 0.3s ease;
+        }
+
+        .password-container .toggle-password:hover {
+            color: #1e40af;
+        }
+
+        /* Developer Contact Section */
+        .developer-contact {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .developer-contact a {
+            color: #1e40af;
+            text-decoration: none;
+            font-size: 1.2rem;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+
+        .developer-contact a:hover {
+            color: #1e3a8a;
+            transform: translateY(-2px);
+        }
+
+        .developer-contact i {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <h1>StegoCipher</h1>
+    <div class="container">
+        <!-- Toggle Buttons -->
+        <div class="toggle-buttons">
+            <button id="encodeToggle" class="active" onclick="toggleSection('encode')">Encode</button>
+            <button id="decodeToggle" onclick="toggleSection('decode')">Decode</button>
+        </div>
+
+        <!-- Encode Section -->
+        <div id="encodeSection">
+            <h2 style="color: #1e40af;">Encode Message</h2>
+            <div class="file-input">
+                <input type="file" id="imageInput" accept="image/*">
+                <label for="imageInput">
+                    <i class="fas fa-image"></i> Choose Image
+                </label>
+            </div>
+            <textarea id="messageInput" placeholder="Enter your secret message..."></textarea>
+            <div class="password-container">
+                <input type="password" id="encodePassword" placeholder="Enter a password (optional)">
+                <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('encodePassword', this)"></i>
+            </div>
+            <button id="encodeButton">Encode Message</button>
+            <div class="preview">
+                <img id="previewImage" src="#" alt="Image Preview" style="display: none;">
+            </div>
+        </div>
+
+        <!-- Decode Section -->
+        <div id="decodeSection" style="display: none;">
+            <h2 style="color: #1e40af;">Decode Message</h2>
+            <div class="file-input">
+                <input type="file" id="stegoImageInput" accept="image/*">
+                <label for="stegoImageInput">
+                    <i class="fas fa-image"></i> Choose Image
+                </label>
+            </div>
+            <div class="password-container">
+                <input type="password" id="decodePassword" placeholder="Enter the password (if used)">
+                <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('decodePassword', this)"></i>
+            </div>
+            <button id="decodeButton">Decode Message</button>
+            <textarea id="decodedMessage" placeholder="Decoded message will appear here..." readonly></textarea>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="status" class="status"></div>
+    </div>
+
+    <!-- Developer Contact Section -->
+    <div class="developer-contact">
+        <h>Contact with developer</h>
+        <a href="https://www.facebook.com/MuhammadRiyaddd" target="_blank" title="Facebook">
+            <i class="fab fa-facebook"></i>
+        </a>
+        <a href="https://t.me/DirectMassageeee" target="_blank" title="Telegram">
+            <i class="fab fa-telegram"></i>
+        </a>
+    </div>
+
+    <script>
+        // Toggle between Encode and Decode sections
+        function toggleSection(section) {
+            const encodeSection = document.getElementById('encodeSection');
+            const decodeSection = document.getElementById('decodeSection');
+            const encodeToggle = document.getElementById('encodeToggle');
+            const decodeToggle = document.getElementById('decodeToggle');
+
+            if (section === 'encode') {
+                encodeSection.style.display = 'block';
+                decodeSection.style.display = 'none';
+                encodeToggle.classList.add('active');
+                decodeToggle.classList.remove('active');
+            } else {
+                encodeSection.style.display = 'none';
+                decodeSection.style.display = 'block';
+                encodeToggle.classList.remove('active');
+                decodeToggle.classList.add('active');
+            }
+        }
+
+        // Toggle Password Visibility
+        function togglePasswordVisibility(inputId, icon) {
+            const passwordInput = document.getElementById(inputId);
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = "password";
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // AES Encryption with HMAC for password verification
+        function encryptWithHMAC(message, password) {
+            const encryptedMessage = CryptoJS.AES.encrypt(message, password).toString();
+            const hmac = CryptoJS.HmacSHA256(encryptedMessage, password).toString();
+            return `${encryptedMessage}:${hmac}`;
+        }
+
+        // AES Decryption with HMAC for password verification
+        function decryptWithHMAC(encryptedData, password) {
+            const [encryptedMessage, hmac] = encryptedData.split(':');
+            const calculatedHMAC = CryptoJS.HmacSHA256(encryptedMessage, password).toString();
+
+            if (calculatedHMAC !== hmac) {
+                throw new Error("Invalid password or corrupted data.");
+            }
+
+            const decryptedMessage = CryptoJS.AES.decrypt(encryptedMessage, password).toString(CryptoJS.enc.Utf8);
+            if (!decryptedMessage) {
+                throw new Error("Invalid password or corrupted data.");
+            }
+            return decryptedMessage;
+        }
+
+        // Encode Message
+        document.getElementById('encodeButton').addEventListener('click', encodeMessage);
+        // Decode Message
+        document.getElementById('decodeButton').addEventListener('click', decodeMessage);
+
+        // Handle Image Input
+        document.getElementById('imageInput').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (!file.type.startsWith('image/')) {
+                    const status = document.getElementById('status');
+                    status.textContent = 'Please select a valid image file.';
+                    status.className = 'status error';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const img = document.getElementById('previewImage');
+                    img.src = event.target.result;
+                    img.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Encode Function
+        function encodeMessage() {
+            const imageInput = document.getElementById('imageInput');
+            const messageInput = document.getElementById('messageInput');
+            const encodePassword = document.getElementById('encodePassword').value;
+            const status = document.getElementById('status');
+
+            if (!imageInput.files[0] || !messageInput.value) {
+                status.textContent = 'Please select an image and enter a message.';
+                status.className = 'status error';
+                return;
+            }
+
+            let message = messageInput.value;
+            if (encodePassword) {
+                message = encryptWithHMAC(message, encodePassword);
+            }
+
+            const image = new Image();
+            image.src = URL.createObjectURL(imageInput.files[0]);
+            image.onload = function () {
+                const canvas = document.createElement('canvas');
+                canvas.width = image.width;
+                canvas.height = image.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(image, 0, 0);
+
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                const messageWithTerminator = message + String.fromCharCode(0); // Null terminator
+                const messageBits = textToBits(messageWithTerminator);
+
+                if (messageBits.length > data.length * 4) {
+                    status.textContent = 'Message too large for the selected image.';
+                    status.className = 'status error';
+                    return;
+                }
+
+                for (let i = 0; i < messageBits.length; i++) {
+                    const byteIndex = Math.floor(i / 4);
+                    const bitIndex = i % 4;
+                    data[byteIndex] = (data[byteIndex] & ~(1 << bitIndex)) | (messageBits[i] << bitIndex);
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+                const encodedImage = canvas.toDataURL('image/png');
+                const downloadLink = document.createElement('a');
+                downloadLink.href = encodedImage;
+                downloadLink.download = 'encoded-image.png';
+                downloadLink.click();
+
+                status.textContent = 'Message encoded successfully!';
+                status.className = 'status success';
+            };
+        }
+
+        // Decode Function
+        function decodeMessage() {
+            const stegoImageInput = document.getElementById('stegoImageInput');
+            const decodePassword = document.getElementById('decodePassword').value;
+            const decodedMessage = document.getElementById('decodedMessage');
+            const status = document.getElementById('status');
+
+            if (!stegoImageInput.files[0]) {
+                status.textContent = 'Please select an encoded image.';
+                status.className = 'status error';
+                return;
+            }
+
+            const image = new Image();
+            image.src = URL.createObjectURL(stegoImageInput.files[0]);
+            image.onload = function () {
+                const canvas = document.createElement('canvas');
+                canvas.width = image.width;
+                canvas.height = image.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(image, 0, 0);
+
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                let messageBits = [];
+                let message = '';
+
+                for (let i = 0; i < data.length; i++) {
+                    for (let j = 0; j < 4; j++) {
+                        messageBits.push((data[i] >> j) & 1);
+                        if (messageBits.length % 8 === 0) {
+                            const charCode = parseInt(messageBits.slice(-8).join(''), 2);
+                            if (charCode === 0) { // Null terminator
+                                if (decodePassword) {
+                                    try {
+                                        const decryptedMessage = decryptWithHMAC(message, decodePassword);
+                                        decodedMessage.value = decryptedMessage;
+                                        status.textContent = ' secret massage is decodeed successfully by using our advance technology ';
+                                        status.className = 'status success';
+
+                                        // Automatically copy the decoded message
+                                        decodedMessage.select();
+                                        document.execCommand('copy');
+                                        return;
+                                    } catch (error) {
+                                        // Wrong password entered
+                                        status.textContent = "Invalid password. Please enter the correct password.";
+                                        status.className = 'status error';
+                                        decodedMessage.value = ''; // Clear the decoded message
+                                        return;
+                                    }
+                                } else {
+                                    // If no password was provided but the message was encoded with a password
+                                    if (message.includes(":")) { // Check if the message is HMAC encrypted
+                                        status.textContent = "This message is encoded with a password. Please enter the correct password to decode the message.";
+                                        status.className = 'status warning';
+                                        decodedMessage.value = ''; // Clear the decoded message
+                                        return;
+                                    }
+                                }
+                                decodedMessage.value = message;
+                                status.textContent = 'secret massage is decodeed successfully by using our advance technology. @Riyad';
+                                status.className = 'status success';
+
+                                // Automatically copy the decoded message
+                                decodedMessage.select();
+                                document.execCommand('copy');
+                                return;
+                            }
+                            message += String.fromCharCode(charCode);
+                        }
+                    }
+                }
+            };
+        }
+
+        // Convert text to binary bits
+        function textToBits(text) {
+            return [...text].flatMap(char => 
+                char.charCodeAt(0).toString(2).padStart(8, '0').split('').map(bit => parseInt(bit))
+            );
+        }
+    </script>
+</body>
+</html>
